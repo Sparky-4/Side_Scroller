@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<link href='https://fonts.googleapis.com/css?family=Electrolize' rel='stylesheet'>
+	<style>
+		body {
+			overflow: hidden;
+			margin: 0px;
+		}
+		
+	</style>
+
+</head>
+<body onLoad = requestAnimationFrame(update)>
+
+<canvas id="myCanvas"></canvas>
+
+<!--js scripts for objects and misc.-->
+<script src="src/Quad.js"></script>
+<script src="src/Util.js"></script>
+<script src="src/constants.js"></script>
+
+<script>
+
+    // Declare and initialize the canvas variables
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Variables for finding FPS
+    const times = [];
+    let fps;
+
+    // Load new font from the font files
+    var font = new FontFace('font', 'url(fonts/font.ttf)');
+    font.load().then(function(loaded_face) {
+        document.fonts.add(loaded_face);
+    })
+    
+    // Declare and initialize objects that holds fonts
+    let gFonts = {
+        small: 8*SCALE_FACTOR_WIDTH + "px font",
+        medium: 16*SCALE_FACTOR_WIDTH + "px font",
+        large: 32*SCALE_FACTOR_WIDTH + "px font",
+        other: 4*SCALE_FACTOR_WIDTH + "px Arial"
+    };
+
+    // Declare all images as image objects in a global textures object
+    let gTextures = {
+        main: new Image(32, 16)
+    };
+    
+    // Initialize all images from files
+    gTextures.main.src = "tiles.png";
+
+    // Declare and initialize quads for all textures as objects using the util.js functions
+
+    gFrames = {
+        tiles: GenerateQuads(gTextures.main, 16, 16, 16, 16)
+    }
+
+    // Add event listeners for keydown and keyup and change the array "keys" accordingly
+    let keys = [];
+    window.addEventListener('keydown', function (e) {
+        keys[e.keyCode] = true;
+    })
+    window.addEventListener('keyup', function (e) {
+        keys[e.keyCode] = false;
+    })
+
+    /* 
+    * The update function - called every frame using requestAnimationFrame and updates
+    * individual parts of the game
+    */
+
+    cameraScroll = 0;
+    cameraSpeed = 10;
+
+    function update()
+    {
+        draw();
+        if(keys[37]){
+            cameraScroll -= cameraSpeed;
+            ctx.translate(cameraSpeed, 0);
+        }
+        else if(keys[39]){
+            cameraScroll += cameraSpeed;
+            ctx.translate(-cameraSpeed, 0);
+        }
+        requestAnimationFrame(update);
+    }
+
+    /*
+    * Draw on the canvas and call the render functions of other necessary parts
+    */
+    function draw()
+    {       
+        ctx.clearRect(cameraScroll, 0,WINDOW_WIDTH,WINDOW_HEIGHT) 
+        for(let i = 0; i < 20; i++){
+                for(let j = 0; j < 20; j++){
+                    gFrames.tiles[0].draw(j*16*SCALE_FACTOR_WIDTH, i*SCALE_FACTOR_HEIGHT*75+500)
+                }
+        }
+        displayFPS();
+    }
+
+    /*
+    * Display the FPS by adding a time stamp to the times array and removing any stamp
+    * longer than one second
+    */
+    function displayFPS()
+    {
+        const now = performance.now();
+        while (times.length > 0 && times[0] <= now - 1000) {
+            times.shift();
+        }
+        times.push(now);
+        fps = times.length;
+        
+        ctx.textAlign = 'left';
+        ctx.font = gFonts.small;
+        ctx.fillStyle = 'blue';
+        ctx.fillText("FPS: " + fps, 10*SCALE_FACTOR_WIDTH + cameraScroll, 10*SCALE_FACTOR_HEIGHT);
+    }
+
+    function randInt(min, max) 
+    {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1) + min); 
+    }
+
+
+
+    
+</script>
+
+
+    
+</body>
+</html>
