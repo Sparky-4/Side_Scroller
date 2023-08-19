@@ -1,8 +1,7 @@
 /*Generating quads given an atlas and a width and height for the tile by adding
  *a quad in an array for each quad in the atlas
  */
-function GenerateQuads(atlas, tileWidth, tileHeight, vWidth, vHeight)
-{
+function GenerateQuads(atlas, tileWidth, tileHeight, vWidth, vHeight){
 	let sheetWidth = atlas.width;
 	let sheetHeight = atlas.height;
 	
@@ -24,18 +23,44 @@ function GenerateQuads(atlas, tileWidth, tileHeight, vWidth, vHeight)
 /*
 *Generate multi-tile blocks using the GenerateQuads function and adjust their width and height 
 */
-function GenerateBlocks(atlas)
-{
-	var multiBlocks = [];
-
-    for(let i = 0; i < 4; i++)
-    {
-        var blocks = GenerateQuads(atlas, 32, 32, 25*(i+1), 25);
-		for(let j = 0; j < blocks.length; j++)
-			multiBlocks.push(blocks[j]);
-    }
-
-    return multiBlocks;
-
+function GenerateTiles(atlas){
+	let tileSets = [];
+	let setNum = 0;
+	for(let i = 0; i < 10; i++){
+		for(let j = 0; j < 6; j++){
+			let set = [];
+			let tileNum = 0;
+			for(let k = 0; k < 4; k++){
+				for(let m = 0; m < 5; m++){
+					set[tileNum] = new Quad(j*80+m*16, i*64+k*16,
+						16, 16, atlas, 16, 16);
+					tileNum++;
+				}
+			}
+			tileSets[setNum] = set;
+			setNum++;
+		}
+	}
+	return tileSets;
 }
 
+function GenerateToppers(atlas){
+	let tileSets = [];
+	let setNum = 0;
+	for(let i = 0; i < 18; i++){
+		for(let j = 0; j < 6; j++){
+			let set = [];
+			let tileNum = 0;
+			for(let k = 0; k < 4; k++){
+				for(let m = 0; m < 5; m++){
+					set[tileNum] = new Quad(j*80+m*16, i*64+k*16,
+						16, 16, atlas, 16, 16);
+					tileNum++;
+				}
+			}
+			tileSets[setNum] = set;
+			setNum++;
+		}
+	}
+	return tileSets;
+}

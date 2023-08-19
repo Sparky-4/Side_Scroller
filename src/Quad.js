@@ -13,6 +13,7 @@ class Quad{
 	
 	draw(x, y, width, height)
 	{
+		ctx.imageSmoothingEnabled = false; 
 		if(width && height)
 		ctx.drawImage(this.img, 
 						this.x, this.y, this.width, this.height, 

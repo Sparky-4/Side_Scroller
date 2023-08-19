@@ -20,12 +20,16 @@
 <script src="src/Quad.js"></script>
 <script src="src/Util.js"></script>
 <script src="src/constants.js"></script>
+<script src="src/Animation.js"></script>
+<script src="src/Timer.js"></script>
+<script src="src/character.js"></script>
 
 <script>
 
     // Declare and initialize the canvas variables
-    var canvas = document.getElementById("myCanvas");
-    var ctx = canvas.getContext("2d");
+    let cameraScroll = 0;
+    let canvas = document.getElementById("myCanvas");
+    let ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -34,7 +38,7 @@
     let fps;
 
     // Load new font from the font files
-    var font = new FontFace('font', 'url(fonts/font.ttf)');
+    let font = new FontFace('font', 'url(fonts/font.ttf)');
     font.load().then(function(loaded_face) {
         document.fonts.add(loaded_face);
     })
@@ -48,18 +52,26 @@
     };
 
     // Declare all images as image objects in a global textures object
+    let backgroundColor = '#' + Math.floor(Math.random()*16777215).toString(16);
     let gTextures = {
-        main: new Image(32, 16)
+        main: new Image(480, 640),
+        toppers: new Image(480, 1152),
+        character: new Image(1760, 100),
     };
     
     // Initialize all images from files
-    gTextures.main.src = "tiles.png";
+    gTextures.main.src = "graphics/tiles.png";
+    gTextures.toppers.src = "graphics/tile_tops.png";
+    gTextures.character.src = "graphics/character.png";
 
     // Declare and initialize quads for all textures as objects using the util.js functions
-
     gFrames = {
-        tiles: GenerateQuads(gTextures.main, 16, 16, 16, 16)
+        tiles: GenerateTiles(gTextures.main),
+        toppers: GenerateToppers(gTextures.toppers),
+        character: GenerateQuads(gTextures.character, 80, 100, 16, 20)
     }
+    let tileSet = randInt(0, gFrames.tiles.length-1);
+    let topperSet = randInt(0, gFrames.toppers.length-1);
 
     // Add event listeners for keydown and keyup and change the array "keys" accordingly
     let keys = [];
@@ -75,34 +87,36 @@
     * individual parts of the game
     */
 
-    cameraScroll = 0;
-    cameraSpeed = 10;
-
-    function update()
-    {
-        draw();
+    let C = new Character();
+    function update(){
         if(keys[37]){
-            cameraScroll -= cameraSpeed;
-            ctx.translate(cameraSpeed, 0);
+            cameraScroll -= CAMERA_SPEED;
+            ctx.translate(CAMERA_SPEED, 0);
         }
         else if(keys[39]){
-            cameraScroll += cameraSpeed;
-            ctx.translate(-cameraSpeed, 0);
+            cameraScroll += CAMERA_SPEED;
+            ctx.translate(-CAMERA_SPEED, 0);
         }
+        C.update();
+        draw();
         requestAnimationFrame(update);
     }
 
     /*
     * Draw on the canvas and call the render functions of other necessary parts
     */
-    function draw()
-    {       
-        ctx.clearRect(cameraScroll, 0,WINDOW_WIDTH,WINDOW_HEIGHT) 
+    function draw(){ 
+        ctx.imageSmoothingEnabled = false; 
+        ctx.fillStyle = backgroundColor;     
+        ctx.fillRect(cameraScroll, 0,WINDOW_WIDTH,WINDOW_HEIGHT)
+
         for(let i = 0; i < 20; i++){
                 for(let j = 0; j < 20; j++){
-                    gFrames.tiles[0].draw(j*16*SCALE_FACTOR_WIDTH, i*SCALE_FACTOR_HEIGHT*75+500)
+                    gFrames.tiles[tileSet][2].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16+700);
                 }
+                gFrames.toppers[topperSet][1].draw(i*16*SCALE_FACTOR_WIDTH, 700);
         }
+        C.render();
         displayFPS();
     }
 
@@ -110,8 +124,7 @@
     * Display the FPS by adding a time stamp to the times array and removing any stamp
     * longer than one second
     */
-    function displayFPS()
-    {
+    function displayFPS(){
         const now = performance.now();
         while (times.length > 0 && times[0] <= now - 1000) {
             times.shift();
@@ -125,8 +138,7 @@
         ctx.fillText("FPS: " + fps, 10*SCALE_FACTOR_WIDTH + cameraScroll, 10*SCALE_FACTOR_HEIGHT);
     }
 
-    function randInt(min, max) 
-    {
+    function randInt(min, max){
         min = Math.ceil(min);
         max = Math.floor(max);
         return Math.floor(Math.random() * (max - min + 1) + min); 
