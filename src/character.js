@@ -2,7 +2,7 @@ class Character{
 	
 	constructor(){
 		this.x = VIRTUAL_WIDTH*SCALE_FACTOR_WIDTH / 2 - 16*SCALE_FACTOR_WIDTH;
-		this.y = 700 - 20*SCALE_FACTOR_HEIGHT;
+		this.y = 76*SCALE_FACTOR_HEIGHT;
         this.dy = 0;
 		this.width = 20*SCALE_FACTOR_WIDTH;
 		this.height = 25*SCALE_FACTOR_HEIGHT;
@@ -17,8 +17,8 @@ class Character{
 	update(){
         this.dy += GRAVITY;
         this.y += this.dy;
-        if(this.y > 700 - 20*SCALE_FACTOR_HEIGHT){
-            this.y = 700 - 20*SCALE_FACTOR_HEIGHT;
+        if(this.y > 76*SCALE_FACTOR_HEIGHT){
+            this.y = 76*SCALE_FACTOR_HEIGHT;
             this.dy = 0;
         }
 		if(keys && keys[37]){

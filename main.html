@@ -77,6 +77,10 @@
     let keys = [];
     window.addEventListener('keydown', function (e) {
         keys[e.keyCode] = true;
+        if(e.keyCode == 82){
+            tileSet = randInt(0, gFrames.tiles.length-1);
+            topperSet = randInt(0, gFrames.toppers.length-1);
+        }
     })
     window.addEventListener('keyup', function (e) {
         keys[e.keyCode] = false;
@@ -110,11 +114,12 @@
         ctx.fillStyle = backgroundColor;     
         ctx.fillRect(cameraScroll, 0,WINDOW_WIDTH,WINDOW_HEIGHT)
 
-        for(let i = 0; i < 20; i++){
-                for(let j = 0; j < 20; j++){
-                    gFrames.tiles[tileSet][2].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16+700);
+        for(let i = 0; i < 16; i++){
+                for(let j = 0; j < 9; j++){
+                    if(j >= 6)
+                        gFrames.tiles[tileSet][12].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16);
                 }
-                gFrames.toppers[topperSet][1].draw(i*16*SCALE_FACTOR_WIDTH, 700);
+            gFrames.toppers[topperSet][2].draw(i*16*SCALE_FACTOR_WIDTH, 96*SCALE_FACTOR_HEIGHT);
         }
         C.render();
         displayFPS();
