@@ -12,7 +12,7 @@
 	</style>
 
 </head>
-<body onLoad = requestAnimationFrame(update)>
+<body onLoad = requestAnimationFrame(start)>
 
 <canvas id="myCanvas"></canvas>
 
@@ -30,6 +30,7 @@
     let cameraScroll = 0;
     let canvas = document.getElementById("myCanvas");
     let ctx = canvas.getContext("2d");
+    ctx.save();
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -52,26 +53,29 @@
     };
 
     // Declare all images as image objects in a global textures object
-    let backgroundColor = '#' + Math.floor(Math.random()*16777215).toString(16);
     let gTextures = {
         main: new Image(480, 640),
         toppers: new Image(480, 1152),
-        character: new Image(1760, 100),
+        character: new Image(352, 20),
+        backgrounds: new Image(256, 384),
     };
     
     // Initialize all images from files
     gTextures.main.src = "graphics/tiles.png";
     gTextures.toppers.src = "graphics/tile_tops.png";
     gTextures.character.src = "graphics/character.png";
+    gTextures.backgrounds.src = "graphics/backgrounds.png";
 
     // Declare and initialize quads for all textures as objects using the util.js functions
     gFrames = {
         tiles: GenerateTiles(gTextures.main),
         toppers: GenerateToppers(gTextures.toppers),
-        character: GenerateQuads(gTextures.character, 80, 100, 16, 20)
+        character: GenerateQuads(gTextures.character, 16, 20, 16, 20),
+        backgrounds: GenerateQuads(gTextures.backgrounds, 256, 128, 256, 128)
     }
     let tileSet = randInt(0, gFrames.tiles.length-1);
     let topperSet = randInt(0, gFrames.toppers.length-1);
+    let background = randInt(0, 2);
 
     // Add event listeners for keydown and keyup and change the array "keys" accordingly
     let keys = [];
@@ -80,27 +84,68 @@
         if(e.keyCode == 82){
             tileSet = randInt(0, gFrames.tiles.length-1);
             topperSet = randInt(0, gFrames.toppers.length-1);
+            background = randInt(0, 2);
+        }
+        if(e.keyCode == 81){
+            generateLevel();
         }
     })
     window.addEventListener('keyup', function (e) {
         keys[e.keyCode] = false;
     })
 
+    //Level Generation
+    let C;
+    let level = [];
+    function generateLevel(){
+        for(let i = 0; i < 100; i++){
+            let col = [];
+            for(let j = 0; j < 9; j++){
+                col[j] = {
+                    id: 0,
+                    topper: false
+                };
+            }
+            level[i] = col;
+        }
+        for(let i = 0; i < 100; i++){
+            if(randInt(1, 7) == 1)
+                continue;
+            let pillerFlag = false;
+            if(randInt(1, 5) == 1)
+                pillerFlag = true;
+            for(let j = 0; j < 9; j++){
+                if(j >= 7 || (pillerFlag && j >= 5))
+                    level[i][j].id = 1;
+                if((pillerFlag && j == 5) || (!pillerFlag && j == 7))
+                    level[i][j].topper = true;
+            }
+        }
+    }
+
+    function drawLevel(){
+        for(let i = 0; i < 100; i++){
+            for(let j = 0; j < 9; j++){
+                if(level[i][j].id == 1)
+                    gFrames.tiles[tileSet][12].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16);
+                if(level[i][j].topper)
+                    gFrames.toppers[topperSet][2].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16);
+
+            }
+        }
+    }
+
+    function start(){
+        generateLevel();
+        C = new Character();
+        update();
+    }
+
     /* 
     * The update function - called every frame using requestAnimationFrame and updates
     * individual parts of the game
     */
-
-    let C = new Character();
     function update(){
-        if(keys[37]){
-            cameraScroll -= CAMERA_SPEED;
-            ctx.translate(CAMERA_SPEED, 0);
-        }
-        else if(keys[39]){
-            cameraScroll += CAMERA_SPEED;
-            ctx.translate(-CAMERA_SPEED, 0);
-        }
         C.update();
         draw();
         requestAnimationFrame(update);
@@ -111,16 +156,11 @@
     */
     function draw(){ 
         ctx.imageSmoothingEnabled = false; 
-        ctx.fillStyle = backgroundColor;     
         ctx.fillRect(cameraScroll, 0,WINDOW_WIDTH,WINDOW_HEIGHT)
-
-        for(let i = 0; i < 16; i++){
-                for(let j = 0; j < 9; j++){
-                    if(j >= 6)
-                        gFrames.tiles[tileSet][12].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16);
-                }
-            gFrames.toppers[topperSet][2].draw(i*16*SCALE_FACTOR_WIDTH, 96*SCALE_FACTOR_HEIGHT);
+        for(let i = 0; i < 10; i++){
+            gFrames.backgrounds[background].draw(Math.floor(cameraScroll*2/3) + i*256*SCALE_FACTOR_WIDTH, 0);
         }
+        drawLevel();
         C.render();
         displayFPS();
     }
