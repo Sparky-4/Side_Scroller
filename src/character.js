@@ -67,6 +67,8 @@ class Character{
         }
         if(this.dy == 0 && (keys[32] || keys[38])){
                 this.dy = -JUMP_SPEED/SCALE_FACTOR_HEIGHT;
+                gSounds.jump.load();
+                gSounds.jump.play();
         }
         if(this.collides(this.x, this.y).top){
             this.y = Math.floor((this.y)/16)*16 + this.height;
@@ -109,11 +111,16 @@ class Character{
 	update(){
         this.handleMovement();
         this.curAnimation.update();
+        for(let i = 0; i < entities.length; i++){
+            if(entities[i].collides(this)){
+                entities[i].hitPlayer(this)
+            }
+        }
 	}
 	
 	render(){
-		    gFrames.character[this.curAnimation.getCurFrame()].draw(this.x*SCALE_FACTOR_WIDTH, this.y*SCALE_FACTOR_HEIGHT);
-            if(hitboxes)
-                ctx.strokeRect(this.x*SCALE_FACTOR_WIDTH, this.y*SCALE_FACTOR_HEIGHT, this.width*SCALE_FACTOR_WIDTH, this.height*SCALE_FACTOR_HEIGHT)
+        gFrames.character[this.curAnimation.getCurFrame()].draw(this.x*SCALE_FACTOR_WIDTH, this.y*SCALE_FACTOR_HEIGHT);
+        if(hitboxes)
+            ctx.strokeRect(this.x*SCALE_FACTOR_WIDTH, this.y*SCALE_FACTOR_HEIGHT, this.width*SCALE_FACTOR_WIDTH, this.height*SCALE_FACTOR_HEIGHT)
 	}
 }

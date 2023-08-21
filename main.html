@@ -25,6 +25,8 @@
 <script src="src/character.js"></script>
 <script src="src/StateMachine.js"></script>
 <script src="src/levelMaker.js"></script>
+<script src="src/Entity.js"></script>
+<script src="src/Snail.js"></script>
 
 <!--js scripts for all states-->
 <script src="src/states/GameOverState.js"></script>
@@ -66,6 +68,30 @@
         other: 2*SCALE_FACTOR_WIDTH + "px Arial"
     };
 
+    // Declare all sounds as audio objects in a global sounds object
+    let gSounds = {
+        main: document.createElement("AUDIO"),
+        death: document.createElement("AUDIO"),
+        death2: document.createElement("AUDIO"),
+        jump: document.createElement("AUDIO"),
+        kill: document.createElement("AUDIO"),
+        kill2: document.createElement("AUDIO"),
+        pickup: document.createElement("AUDIO"),
+        reveal: document.createElement("AUDIO"),
+        empty: document.createElement("AUDIO"),
+    };
+	
+    // Initialize all sounds from files
+    gSounds.main.src = "sounds/music1.mp3";
+    gSounds.death.src = "sounds/death.wav";
+    gSounds.death2.src = "sounds/death2.mp3";
+    gSounds.jump.src = "sounds/jump.wav";
+    gSounds.kill.src = "sounds/kill.wav";
+    gSounds.kill2.src = "sounds/kill2.wav";
+    gSounds.pickup.src = "sounds/pickup.wav";
+    gSounds.reveal.src = "sounds/powerup-reveal.wav";
+    gSounds.empty.src = "sounds/empty-block.wav";
+
     // Declare all images as image objects in a global textures object
     let gTextures = {
         main: new Image(480, 640),
@@ -73,6 +99,8 @@
         character: new Image(352, 20),
         backgrounds: new Image(256, 384),
         jump_blocks: new Image(96, 80),
+        creatures: new Image(256, 112),
+        water: new Image(128, 32),
     };
     
     // Initialize all images from files
@@ -81,6 +109,8 @@
     gTextures.character.src = "graphics/character.png";
     gTextures.backgrounds.src = "graphics/backgrounds.png";
     gTextures.jump_blocks.src = "graphics/jump_blocks.png";
+    gTextures.creatures.src = "graphics/creatures.png";
+    gTextures.water.src = "graphics/water.png";
 
     // Declare and initialize quads for all textures as objects using the util.js functions
     gFrames = {
@@ -89,10 +119,13 @@
         character: GenerateQuads(gTextures.character, 16, 20, 16, 20),
         backgrounds: GenerateQuads(gTextures.backgrounds, 256, 128, 256, 128),
         jump_blocks: GenerateQuads(gTextures.jump_blocks, 16, 16, 16, 16),
+        creatures: GenerateQuads(gTextures.creatures, 16, 16, 16, 16),
+        water: GenerateQuads(gTextures.water, 16, 32, 16, 32),
     }
     let tileSet = randInt(0, gFrames.tiles.length-1);
     let topperSet = randInt(0, gFrames.toppers.length-1);
     let background = randInt(0, 2);
+    let pauseTimer = 0;
 
     // Add event listeners for keydown and keyup and change the array "keys" accordingly
     let keys = [];
@@ -132,6 +165,14 @@
     * individual parts of the game
     */
     function update(){
+        if(keys[80] && pauseTimer < 0){
+            if(!gSounds.main.paused)
+                gSounds.main.pause();
+            else
+                gSounds.main.play();
+            pauseTimer = 10;
+        }
+        pauseTimer--;
         gStateMachine.update();
         draw();
         requestAnimationFrame(update);
@@ -142,8 +183,8 @@
     */
     function draw(){ 
         ctx.imageSmoothingEnabled = false; 
-        ctx.fillStyle = 'aqua';
-        ctx.fillRect(cameraScroll, 0,WINDOW_WIDTH,WINDOW_HEIGHT)
+        // ctx.fillStyle = 'aqua';
+        // ctx.fillRect(cameraScroll, 0,WINDOW_WIDTH,WINDOW_HEIGHT)
         for(let i = 0; i < 10; i++){
             gFrames.backgrounds[background].draw(Math.floor(cameraScroll*2/3) + i*256*SCALE_FACTOR_WIDTH, 0);
         }

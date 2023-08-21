@@ -6,16 +6,25 @@ class PlayState{
 
     enter(params){
         this.player = new Character();
+        gSounds.main.load();
+        gSounds.main.play();
     }
 
     update(){
         if(Math.floor((this.player.y+this.player.height)/16) == 9){
-            gStateMachine.change('game_over', this.player);
+            gStateMachine.change('game_over', [this.player]);
         }
         this.player.update();
+        for(let i = 0; i < entities.length; i++){
+            entities[i].update();
+        }
+        gLevelMaker.waterAnim+=SCALE_FACTOR_WIDTH/4;
     }
 
     render(){
         this.player.render();
+        for(let i = 0; i < entities.length; i++){
+            entities[i].render();
+        }
     }
 }

@@ -1,10 +1,15 @@
 class GameOverState{
     constructor(){
-        this.player;
+        this.toRender;
     }
 
-    enter(player){
-        this.player = player;
+    enter(toRender){
+        this.toRender = toRender;
+        gSounds.death.load();
+        gSounds.death2.load();
+        gSounds.main.pause();
+        gSounds.death.play();
+        gSounds.death2.play();
     }
 
     /*
@@ -19,7 +24,9 @@ class GameOverState{
     * renders the start page
     */
     render(){   
-        this.player.render();
+        for(let i = 0; i < this.toRender.length; i++){
+            this.toRender[i].render();
+        }
         ctx.font = gFonts.large;
 		ctx.fillStyle = 'white';
 		ctx.textAlign = 'center';

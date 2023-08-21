@@ -19,7 +19,7 @@ class StartState{
         ctx.font = gFonts.large;
 		ctx.fillStyle = 'white';
 		ctx.textAlign = 'center';
-		ctx.fillText("Super 50 Bros.", VIRTUAL_WIDTH/2*SCALE_FACTOR_WIDTH, VIRTUAL_HEIGHT/3*SCALE_FACTOR_HEIGHT);    
+		ctx.fillText("Super Yash Bros.", VIRTUAL_WIDTH/2*SCALE_FACTOR_WIDTH, VIRTUAL_HEIGHT/3*SCALE_FACTOR_HEIGHT);    
         ctx.font = gFonts.medium;
 		ctx.fillText("Press Enter", VIRTUAL_WIDTH/2*SCALE_FACTOR_WIDTH, VIRTUAL_HEIGHT/2*SCALE_FACTOR_HEIGHT);    
 

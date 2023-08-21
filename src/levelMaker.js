@@ -1,6 +1,7 @@
 class LevelMaker{
     constructor(){
         this.level = [];
+        this.waterAnim = 0;
     }
 
     generateLevel(){
@@ -16,7 +17,7 @@ class LevelMaker{
         }
         for(let i = 0; i < 100; i++){
             //chasms
-            if(randInt(1, 7) == 1)
+            if(randInt(1, 7) == 1 && i != 0)
                 continue;
             //flags
             let pillerFlag = false;
@@ -41,9 +42,28 @@ class LevelMaker{
                     this.level[i][j].id = 3;
             }
         }
+        this.makeEnemies();
+    }
+
+    makeEnemies(){
+        for(let i = 0; i < this.level.length-3; i++){
+            if(this.level[i][6].id == 0 && this.level[i+1][6].id == 0 && this.level[i+2][6].id == 0 &&
+                this.level[i][7].id == 1 && this.level[i+1][7].id == 1 && this.level[i+2][7].id == 1){
+                entities.push(new Snail(randInt(i, i+2)*16, 96, 16, 16));
+                i+=2;
+            }
+        }
     }
 
     drawLevel(){
+        for(let i = 0; i < 100; i++){
+            for(let j = 0; j < 9; j++){
+                 // Render water
+                 if(j == 8)
+                    gFrames.water[2].draw((i*16*SCALE_FACTOR_WIDTH+this.waterAnim)%(16*SCALE_FACTOR_WIDTH*100), ((j*16)-4)*SCALE_FACTOR_HEIGHT);
+            }
+        }
+        
         for(let i = 0; i < 100; i++){
             for(let j = 0; j < 9; j++){
                 // Render all the blocks
@@ -57,7 +77,6 @@ class LevelMaker{
                 // Render all toppers
                 if(this.level[i][j].topper)
                     gFrames.toppers[topperSet][2].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16);
-
             }
         }
     }
