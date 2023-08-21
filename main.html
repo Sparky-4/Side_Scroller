@@ -84,6 +84,7 @@
 	
     // Initialize all sounds from files
     gSounds.main.src = "sounds/music1.mp3";
+    gSounds.main.loop = true;
     gSounds.death.src = "sounds/death.wav";
     gSounds.death2.src = "sounds/death2.mp3";
     gSounds.x.src = "sounds/x.mp3";
@@ -140,6 +141,7 @@
         }
         if(e.keyCode == 81){
             requestAnimationFrame(update)
+            requestAnimationFrame(draw)
         }
         if(e.keyCode == 72){
             hitboxes = !hitboxes;
@@ -160,6 +162,7 @@
     function start(){
         gLevelMaker.generateLevel();
         update();
+        draw();
     }
 
     /* 
@@ -176,8 +179,10 @@
         }
         pauseTimer--;
         gStateMachine.update();
-        draw();
-        requestAnimationFrame(update);
+        setTimeout(() => {
+            requestAnimationFrame(update);
+        }, (3000/60)-(3000/fps));
+        // }, ((fps-60)/60) * (1000));
     }
 
     /*
@@ -193,6 +198,7 @@
         gLevelMaker.drawLevel();
         displayFPS();
         gStateMachine.render();
+        requestAnimationFrame(draw);
     }
 
     /*

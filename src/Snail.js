@@ -7,6 +7,8 @@ class Snail extends Entity{
         this.speeding = true;
         this.dir = Math.random()<.5?1:-1;
         this.state = 1;
+        this.immune = false;
+        this.immuneTime = 30;
     }
 
     checkFlip(x, y){
@@ -38,7 +40,7 @@ class Snail extends Entity{
     }
 
     hitPlayer(player){
-        if(this.state < 0)
+        if(this.state < 0 || this.immune)
             return;
         if(player.dy > 0){
             gSounds.kill.load();
@@ -48,6 +50,7 @@ class Snail extends Entity{
             this.height /= 2;
             this.x += this.width/2;
             this.y += this.height/2;
+            this.immune = true;
         }
         else if(this.state == 1){
             gStateMachine.change('game_over', [player, this]);
@@ -55,6 +58,12 @@ class Snail extends Entity{
     }
 
     update(){
+        if(this.immune){
+            if(this.immuneTime < 0)
+                this.immune = false;
+            else
+                this.immuneTime--;
+        }
         if(this.state == 1){
             if(this.dx < this.max && this.speeding)
                 this.dx += .0007*SCALE_FACTOR_WIDTH;
