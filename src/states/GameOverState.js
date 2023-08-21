@@ -7,9 +7,11 @@ class GameOverState{
         this.toRender = toRender;
         gSounds.death.load();
         gSounds.death2.load();
+        gSounds.x.load();
         gSounds.main.pause();
         gSounds.death.play();
         gSounds.death2.play();
+        gSounds.x.play();
     }
 
     /*
