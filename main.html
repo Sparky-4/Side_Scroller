@@ -23,6 +23,13 @@
 <script src="src/Animation.js"></script>
 <script src="src/Timer.js"></script>
 <script src="src/character.js"></script>
+<script src="src/StateMachine.js"></script>
+<script src="src/levelMaker.js"></script>
+
+<!--js scripts for all states-->
+<script src="src/states/GameOverState.js"></script>
+<script src="src/states/StartState.js"></script>
+<script src="src/states/PlayState.js"></script>
 
 <script>
 
@@ -38,18 +45,25 @@
     const times = [];
     let fps;
 
+	// Initialize a global level maker
+    let gLevelMaker = new LevelMaker();
+
+    // Declare entities array 
+    let entities = []
+    let hitboxes = false;
+
     // Load new font from the font files
-    let font = new FontFace('font', 'url(fonts/font.ttf)');
+    let font = new FontFace('font', 'url(fonts/fipps.otf)');
     font.load().then(function(loaded_face) {
         document.fonts.add(loaded_face);
     })
     
     // Declare and initialize objects that holds fonts
     let gFonts = {
-        small: 8*SCALE_FACTOR_WIDTH + "px font",
-        medium: 16*SCALE_FACTOR_WIDTH + "px font",
-        large: 32*SCALE_FACTOR_WIDTH + "px font",
-        other: 4*SCALE_FACTOR_WIDTH + "px Arial"
+        small: 4*SCALE_FACTOR_WIDTH + "px font",
+        medium: 8*SCALE_FACTOR_WIDTH + "px font",
+        large: 16*SCALE_FACTOR_WIDTH + "px font",
+        other: 2*SCALE_FACTOR_WIDTH + "px Arial"
     };
 
     // Declare all images as image objects in a global textures object
@@ -58,6 +72,7 @@
         toppers: new Image(480, 1152),
         character: new Image(352, 20),
         backgrounds: new Image(256, 384),
+        jump_blocks: new Image(96, 80),
     };
     
     // Initialize all images from files
@@ -65,13 +80,15 @@
     gTextures.toppers.src = "graphics/tile_tops.png";
     gTextures.character.src = "graphics/character.png";
     gTextures.backgrounds.src = "graphics/backgrounds.png";
+    gTextures.jump_blocks.src = "graphics/jump_blocks.png";
 
     // Declare and initialize quads for all textures as objects using the util.js functions
     gFrames = {
         tiles: GenerateTiles(gTextures.main),
         toppers: GenerateToppers(gTextures.toppers),
         character: GenerateQuads(gTextures.character, 16, 20, 16, 20),
-        backgrounds: GenerateQuads(gTextures.backgrounds, 256, 128, 256, 128)
+        backgrounds: GenerateQuads(gTextures.backgrounds, 256, 128, 256, 128),
+        jump_blocks: GenerateQuads(gTextures.jump_blocks, 16, 16, 16, 16),
     }
     let tileSet = randInt(0, gFrames.tiles.length-1);
     let topperSet = randInt(0, gFrames.toppers.length-1);
@@ -87,57 +104,26 @@
             background = randInt(0, 2);
         }
         if(e.keyCode == 81){
-            generateLevel();
+            requestAnimationFrame(update)
+        }
+        if(e.keyCode == 72){
+            hitboxes = !hitboxes;
         }
     })
     window.addEventListener('keyup', function (e) {
         keys[e.keyCode] = false;
     })
 
-    //Level Generation
-    let C;
-    let level = [];
-    function generateLevel(){
-        for(let i = 0; i < 100; i++){
-            let col = [];
-            for(let j = 0; j < 9; j++){
-                col[j] = {
-                    id: 0,
-                    topper: false
-                };
-            }
-            level[i] = col;
-        }
-        for(let i = 0; i < 100; i++){
-            if(randInt(1, 7) == 1)
-                continue;
-            let pillerFlag = false;
-            if(randInt(1, 5) == 1)
-                pillerFlag = true;
-            for(let j = 0; j < 9; j++){
-                if(j >= 7 || (pillerFlag && j >= 5))
-                    level[i][j].id = 1;
-                if((pillerFlag && j == 5) || (!pillerFlag && j == 7))
-                    level[i][j].topper = true;
-            }
-        }
-    }
-
-    function drawLevel(){
-        for(let i = 0; i < 100; i++){
-            for(let j = 0; j < 9; j++){
-                if(level[i][j].id == 1)
-                    gFrames.tiles[tileSet][12].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16);
-                if(level[i][j].topper)
-                    gFrames.toppers[topperSet][2].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16);
-
-            }
-        }
-    }
+    // Create state machine and initialize states
+    gStateMachine = new StateMachine({
+        start: new StartState(),
+        play: new PlayState(),
+        game_over: new GameOverState(),
+        });
+	gStateMachine.change('start');
 
     function start(){
-        generateLevel();
-        C = new Character();
+        gLevelMaker.generateLevel();
         update();
     }
 
@@ -146,7 +132,7 @@
     * individual parts of the game
     */
     function update(){
-        C.update();
+        gStateMachine.update();
         draw();
         requestAnimationFrame(update);
     }
@@ -156,13 +142,14 @@
     */
     function draw(){ 
         ctx.imageSmoothingEnabled = false; 
+        ctx.fillStyle = 'aqua';
         ctx.fillRect(cameraScroll, 0,WINDOW_WIDTH,WINDOW_HEIGHT)
         for(let i = 0; i < 10; i++){
             gFrames.backgrounds[background].draw(Math.floor(cameraScroll*2/3) + i*256*SCALE_FACTOR_WIDTH, 0);
         }
-        drawLevel();
-        C.render();
+        gLevelMaker.drawLevel();
         displayFPS();
+        gStateMachine.render();
     }
 
     /*
