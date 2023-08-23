@@ -46,6 +46,7 @@
     // Variables for finding FPS
     const times = [];
     let fps;
+    let slo = false;
 
 	// Initialize a global level maker
     let gLevelMaker = new LevelMaker();
@@ -140,14 +141,13 @@
             background = randInt(0, 2);
         }
         if(e.keyCode == 81){
-            setTimeout(() => {
-                requestAnimationFrame(update);
-            }, ((fps-60)/60) * ((1000/60)-(1000/fps)));
+            requestAnimationFrame(update);
             requestAnimationFrame(draw)
         }
-        if(e.keyCode == 72){
+        if(e.keyCode == 72)
             hitboxes = !hitboxes;
-        }
+        if(e.keyCode == 65)
+            slo = !slo;
     })
     window.addEventListener('keyup', function (e) {
         keys[e.keyCode] = false;
@@ -181,9 +181,11 @@
         }
         pauseTimer--;
         gStateMachine.update();
-        setTimeout(() => {
-            requestAnimationFrame(update);
-        }, ((fps-60)/60) * (1000/fps));
+        if(!slo){
+            setTimeout(() => {
+                requestAnimationFrame(update);
+            }, ((fps-60)/60) * (1000/fps));
+        }
     }
 
     /*
@@ -191,15 +193,13 @@
     */
     function draw(){ 
         ctx.imageSmoothingEnabled = false; 
-        // ctx.fillStyle = 'aqua';
-        // ctx.fillRect(cameraScroll, 0,WINDOW_WIDTH,WINDOW_HEIGHT)
-        for(let i = 0; i < 10; i++){
+        for(let i = 0; i < 10; i++)
             gFrames.backgrounds[background].draw(Math.floor(cameraScroll*2/3) + i*256*SCALE_FACTOR_WIDTH, 0);
-        }
         gLevelMaker.drawLevel();
         displayFPS();
         gStateMachine.render();
-        requestAnimationFrame(draw);
+        if(!slo)
+            requestAnimationFrame(draw);
     }
 
     /*
