@@ -1,4 +1,4 @@
-class GameOverState{
+class WinState{
     constructor(){
         this.toRender;
     }
@@ -26,7 +26,7 @@ class GameOverState{
         ctx.font = gFonts.large;
 		ctx.fillStyle = 'white';
 		ctx.textAlign = 'center';
-		ctx.fillText("You Died!", VIRTUAL_WIDTH/2*SCALE_FACTOR_WIDTH + cameraScroll, VIRTUAL_HEIGHT/3*SCALE_FACTOR_HEIGHT);    
+		ctx.fillText("You Win!", VIRTUAL_WIDTH/2*SCALE_FACTOR_WIDTH + cameraScroll, VIRTUAL_HEIGHT/3*SCALE_FACTOR_HEIGHT);    
         ctx.font = gFonts.medium;
 		ctx.fillText("Press Enter", VIRTUAL_WIDTH/2*SCALE_FACTOR_WIDTH + cameraScroll, VIRTUAL_HEIGHT/2*SCALE_FACTOR_HEIGHT);    
     }

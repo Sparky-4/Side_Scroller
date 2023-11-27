@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<link href='https://fonts.googleapis.com/css?family=Electrolize' rel='stylesheet'>
+	<style>
+		body {
+            overflow: hidden;
+			margin: 0px;
+		}
+		
+	</style>
+
+</head>
+<body onLoad = requestAnimationFrame(draw)>
+
+<canvas id="myCanvas"></canvas>
+
+<!--js scripts for objects and misc.-->
+<script src="src/Quad.js"></script>
+<script src="src/Util.js"></script>
+<script src="src/constants.js"></script>
+<script src="src/Animation.js"></script>
+<script src="src/Timer.js"></script>
+<script src="src/character.js"></script>
+<script src="src/StateMachine.js"></script>
+<script src="src/levelMaker.js"></script>
+<script src="src/Entity.js"></script>
+<script src="src/Snail.js"></script>
+<script src="src/BlueSnail.js"></script>
+<script src="src/Fly.js"></script>
+<script src="src/Flag.js"></script>
+
+<!--js scripts for all states-->
+<script src="src/states/GameOverState.js"></script>
+<script src="src/states/StartState.js"></script>
+<script src="src/states/PlayState.js"></script>
+<script src="src/states/WinState.js"></script>
+<script src="src/states/SelectState.js"></script>
+
+<!--js scripts for all levels-->
+<script src="src/levels/level1.js"></script>
+
+<script>
+
+    // Declare and initialize the canvas variables
+    let canvas = document.getElementById("myCanvas");
+    let ctx = canvas.getContext("2d");
+    ctx.save();
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    //Declare and instantiate level
+    let hitboxes;
+    let entities = [];
+    let curType;
+    let selectedEntity = false;
+    let level = [];
+    for(let i = 0; i < 100; i++){
+        let col = [];
+        for(let j = 0; j < 9; j++)
+            col[j] = j<7?0:1;
+        level[i] = col;
+    }
+
+    // Declare all images as image objects in a global textures object
+    let gTextures = {
+        main: new Image(480, 640),
+        toppers: new Image(480, 1152),
+        character: new Image(352, 20),
+        backgrounds: new Image(256, 384),
+        jump_blocks: new Image(96, 80),
+        creatures: new Image(256, 112),
+        water: new Image(128, 32),
+        flags: new Image(144, 64),
+    };
+    
+    // Initialize all images from files
+    gTextures.main.src = "graphics/tiles.png";
+    gTextures.toppers.src = "graphics/tile_tops.png";
+    gTextures.character.src = "graphics/character.png";
+    gTextures.backgrounds.src = "graphics/backgrounds.png";
+    gTextures.jump_blocks.src = "graphics/jump_blocks.png";
+    gTextures.creatures.src = "graphics/creatures.png";
+    gTextures.water.src = "graphics/water.png";
+    gTextures.flags.src = "graphics/flags.png";
+
+    // Declare and initialize quads for all textures as objects using the util.js functions
+    gFrames = {
+        tiles: GenerateTiles(gTextures.main),
+        toppers: GenerateToppers(gTextures.toppers),
+        character: GenerateQuads(gTextures.character, 16, 20, 16, 20),
+        backgrounds: GenerateQuads(gTextures.backgrounds, 256, 128, 256, 128),
+        jump_blocks: GenerateQuads(gTextures.jump_blocks, 16, 16, 16, 16),
+        creatures: GenerateQuads(gTextures.creatures, 16, 16, 16, 16),
+        water: GenerateQuads(gTextures.water, 16, 32, 16, 32),
+        posts: GenerateQuads(gTextures.flags, 16, 48, 16, 48).slice(0,6),
+        flags: GenerateFlags(gTextures.flags, 16, 16, 16, 16),
+    }
+    let background = 0;
+    let tileSet = 2;
+
+    let cur = 0;    
+    let offset = 0;
+    window.addEventListener('keydown', function (e) {
+        if(e.keyCode <= 57 && e.keyCode >= 48)
+        cur = e.keyCode-48;
+        if(e.keyCode == 13){
+            console.log({map: level, entities: entities});
+        }
+        if(e.keyCode == 37 && offset > 0){
+            ctx.translate(16*SCALE_FACTOR_WIDTH, 0);
+            offset--;
+        }
+        if(e.keyCode == 39){
+            ctx.translate(-16*SCALE_FACTOR_WIDTH, 0);
+            offset++;
+        }
+        if(e.keyCode == 27){
+            selectedEntity = false;
+            curType = false;
+        }
+        if(e.keyCode == 81){
+            selectedEntity = new Flag(Math.floor((mousePositionX/SCALE_FACTOR_WIDTH+offset*16)/16)*16,
+            Math.floor(mousePositionY/SCALE_FACTOR_HEIGHT/16)*16, 8, 48);
+            curType = 'flag';
+        }
+        if(e.keyCode == 87){
+            selectedEntity = new Snail(Math.floor((mousePositionX/SCALE_FACTOR_WIDTH+offset*16)/16)*16,
+            Math.floor(mousePositionY/SCALE_FACTOR_HEIGHT/16)*16, 16, 16);
+            curType = 'snail';
+        }
+        if(e.keyCode == 69){
+            selectedEntity = new BlueSnail(Math.floor((mousePositionX/SCALE_FACTOR_WIDTH+offset*16)/16)*16,
+            Math.floor(mousePositionY/SCALE_FACTOR_HEIGHT/16)*16, 16, 16);
+            curType = 'blueSnail';
+        }
+        if(e.keyCode == 82){
+            selectedEntity = new Fly(Math.floor((mousePositionX/SCALE_FACTOR_WIDTH+offset*16)/16)*16,
+            Math.floor(mousePositionY/SCALE_FACTOR_HEIGHT/16)*16+2, 16, 16);
+            curType = 'fly';
+        }
+        if(e.keyCode == 88){
+            entities.pop();
+        }
+    })
+
+    let mousePositionX;
+    let mousePositionY;
+    let mouseStartX;
+    let isMouseDown = false;
+    window.addEventListener('mousemove', function (e){
+        mousePositionX = e.clientX;
+        mousePositionY = e.clientY;
+        place();
+    });
+    window.addEventListener('mousedown', function (e){
+        isMouseDown = true;
+        mouseStartX = e.clientX;
+        place();
+    });
+    window.addEventListener('mouseup', function (e){
+        isMouseDown = false;
+    });
+
+    /*
+    * Draw on the canvas and call the render functions of other necessary parts
+    */
+    function draw(){ 
+        ctx.imageSmoothingEnabled = false; 
+        for(let i = 0; i < 10; i++)
+            gFrames.backgrounds[background].draw(i*256*SCALE_FACTOR_WIDTH, 0);
+        //Render water
+        for(let i = 0; i < level.length; i++)
+            for(let j = 0; j < 9; j++)
+                if(j == 8)
+                    gFrames.water[2].draw((i*16*SCALE_FACTOR_WIDTH), ((j*16)-4)*SCALE_FACTOR_HEIGHT);
+        // Blocks
+        for(let i = 0; i < level.length; i++){
+            for(let j = 0; j < 9; j++){
+                // Render all the blocks
+                if(level[i][j] == 1)
+                    gFrames.tiles[tileSet][12].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16);
+                if(level[i][j] == 2)
+                    gFrames.jump_blocks[0].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16);
+                if(level[i][j] == 3)
+                    gFrames.jump_blocks[17].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16);
+                // Render Toppers
+                if(j != 0 && level[i][j-1] == 0 && level[i][j] == 1)
+                    gFrames.toppers[tileSet][2].draw(i*16*SCALE_FACTOR_WIDTH, j*SCALE_FACTOR_HEIGHT*16);
+            }
+        }
+
+        //Draw enitties
+        if(selectedEntity)
+            selectedEntity.render();
+        for(let i = 0; i < entities.length; i++){
+            entities[i].render();
+        }
+        requestAnimationFrame(draw);
+    }
+
+    function place(){
+        if(selectedEntity){
+            selectedEntity.x = Math.floor((mousePositionX/SCALE_FACTOR_WIDTH+offset*16)/16)*16;
+            selectedEntity.y = curType=='fly'?Math.floor(mousePositionY/SCALE_FACTOR_HEIGHT/16)*16+2:Math.floor(mousePositionY/SCALE_FACTOR_HEIGHT/16)*16;
+            if(isMouseDown && !entities.includes(selectedEntity)){
+                selectedEntity.type = curType;
+                entities.push(selectedEntity);
+                selectedEntity = false;
+                curType = false;
+            }
+        }
+        else if(isMouseDown){
+            level[Math.floor((mousePositionX+offset*SCALE_FACTOR_WIDTH*16)/SCALE_FACTOR_WIDTH/16)][Math.floor(mousePositionY/SCALE_FACTOR_HEIGHT/16)] = cur;
+        }
+    }
+
+    function randInt(min, max){
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1) + min); 
+    }
+
+</script>
+
+
+    
+</body>
+</html>

@@ -14,8 +14,11 @@ class Character{
             jumpRight: new Animation([13], 1),
             fallLeft: new Animation([3], 1),
             fallRight: new Animation([18], 1),
+            climb: new Animation([4, 5], 15),
         };        
         this.curAnimation = this.animations.idle;
+        this.score = 0;
+        this.isJumpable = true;
 	}
 
     collides(x, y){
@@ -65,16 +68,16 @@ class Character{
             this.dy = 0;
             this.y = Math.floor((this.y+this.height)/16)*16 - this.height;
         }
-        if(this.dy == 0 && (keys[32] || keys[38])){
+        if(this.dy == 0 && (keys[32] || keys[38]) && this.isJumpable){
                 this.dy = -JUMP_SPEED/SCALE_FACTOR_HEIGHT;
                 gSounds.jump.load();
                 gSounds.jump.play();
+                this.isJumpable = false;
         }
         if(this.collides(this.x, this.y).top){
             this.y = Math.floor((this.y)/16)*16 + this.height;
             this.dy *= -1;
         }
-
 
         // Horizontal movement
         if(keys[37] && this.x > 0){
@@ -85,12 +88,12 @@ class Character{
                 adjust = Math.ceil(this.x/16)*16-this.x;
                 this.x = Math.ceil(this.x/16)*16;
             }
-            if(this.x > VIRTUAL_WIDTH/2 - 8){
+            if(this.x > VIRTUAL_WIDTH/2 - 8 && this.x < (gLevelMaker.level.length-2)*16 - (VIRTUAL_WIDTH/2 - 8)){
                 ctx.translate(CAMERA_SPEED-adjust*SCALE_FACTOR_WIDTH, 0);
                 cameraScroll -= CAMERA_SPEED-adjust*SCALE_FACTOR_WIDTH;
             }
         }
-		else if (keys[39]){
+		else if (keys[39] && this.x < (gLevelMaker.level.length-2)*16){
 			this.x += CAMERA_SPEED/SCALE_FACTOR_WIDTH;
             this.curAnimation = this.dy==0? this.animations.walkRight: this.dy<0? this.animations.jumpRight: this.animations.fallRight;
             let adjust = 0;
@@ -98,29 +101,41 @@ class Character{
                 adjust = this.x-Math.floor(this.x/16)*16;
                 this.x = Math.floor(this.x/16)*16;
             }
-            if(this.x > VIRTUAL_WIDTH/2 - 8){
+            if(this.x > VIRTUAL_WIDTH/2 - 8 && this.x < (gLevelMaker.level.length-2)*16 - (VIRTUAL_WIDTH/2 - 8)){
                 ctx.translate(-CAMERA_SPEED+adjust*SCALE_FACTOR_WIDTH, 0);
                 cameraScroll += CAMERA_SPEED-adjust*SCALE_FACTOR_WIDTH;
             }
-            
         }
         else 
             this.curAnimation = this.animations.idle;
     }
 
+    win(x, y){
+        this.curAnimation = this.animations.idle;
+        this.x = x-this.width;
+        this.y = y-this.height;
+    }
+
 	update(){
+        
         this.handleMovement();
         this.curAnimation.update();
         for(let i = 0; i < entities.length; i++){
             if(entities[i].collides(this)){
-                entities[i].hitPlayer(this)
+                entities[i].hitPlayer(this);
             }
         }
+        if(!(keys[32]||keys[38]))
+            this.isJumpable = true;
 	}
 	
 	render(){
         gFrames.character[this.curAnimation.getCurFrame()].draw(this.x*SCALE_FACTOR_WIDTH, this.y*SCALE_FACTOR_HEIGHT);
+        ctx.textAlign = 'right';
+        ctx.font = gFonts.medium;
+        ctx.fillStyle = 'white';
+        ctx.fillText("Score: " + this.score, WINDOW_WIDTH - 10*SCALE_FACTOR_WIDTH + cameraScroll, 16*SCALE_FACTOR_HEIGHT);
         if(hitboxes)
-            ctx.strokeRect(this.x*SCALE_FACTOR_WIDTH, this.y*SCALE_FACTOR_HEIGHT, this.width*SCALE_FACTOR_WIDTH, this.height*SCALE_FACTOR_HEIGHT)
+            ctx.strokeRect(this.x*SCALE_FACTOR_WIDTH, this.y*SCALE_FACTOR_HEIGHT, this.width*SCALE_FACTOR_WIDTH, this.height*SCALE_FACTOR_HEIGHT);
 	}
 }

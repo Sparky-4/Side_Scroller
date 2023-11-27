@@ -64,3 +64,22 @@ function GenerateToppers(atlas){
 	}
 	return tileSets;
 }
+
+function GenerateFlags(atlas, tileWidth, tileHeight, vWidth, vHeight){
+	let sheetWidth = atlas.width;
+	let sheetHeight = atlas.height;
+	
+	let sheetCounter = 0;
+	let spriteSheet = [];
+	
+	for(let y = 0; y < sheetHeight; y+=tileHeight)
+	{
+		for(let x = 96; x < sheetWidth; x+= tileWidth)
+		{
+			spriteSheet[sheetCounter] = new Quad(x, y,
+			tileWidth, tileHeight, atlas, vWidth, vHeight);
+			sheetCounter++;
+		}
+	}
+	return spriteSheet;
+}

@@ -12,6 +12,10 @@ class PlayState{
 
     update(){
         if(Math.floor((this.player.y+this.player.height)/16) == 9){
+            gSounds.vine.load();
+            gSounds.galaxy.load();
+            gSounds.vine.play();
+            gSounds.galaxy.play();
             gStateMachine.change('game_over', [this.player]);
         }
         this.player.update();

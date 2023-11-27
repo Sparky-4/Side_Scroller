@@ -27,11 +27,22 @@
 <script src="src/levelMaker.js"></script>
 <script src="src/Entity.js"></script>
 <script src="src/Snail.js"></script>
+<script src="src/BlueSnail.js"></script>
+<script src="src/Fly.js"></script>
+<script src="src/Flag.js"></script>
 
 <!--js scripts for all states-->
 <script src="src/states/GameOverState.js"></script>
 <script src="src/states/StartState.js"></script>
 <script src="src/states/PlayState.js"></script>
+<script src="src/states/WinState.js"></script>
+<script src="src/states/SelectState.js"></script>
+
+<!--js scripts for all levels-->
+<script src="src/levels/level0.js"></script>
+<script src="src/levels/level1.js"></script>
+<script src="src/levels/level2.js"></script>
+<script src="src/levels/level3.js"></script>
 
 <script>
 
@@ -81,6 +92,13 @@
         pickup: document.createElement("AUDIO"),
         reveal: document.createElement("AUDIO"),
         empty: document.createElement("AUDIO"),
+        win: document.createElement("AUDIO"),
+        vine: document.createElement("AUDIO"),
+        galaxy: document.createElement("AUDIO"),
+        pipe: document.createElement("AUDIO"),
+        what: document.createElement("AUDIO"),
+        drip: document.createElement("AUDIO"),
+        hub: document.createElement("AUDIO"),
     };
 	
     // Initialize all sounds from files
@@ -95,6 +113,13 @@
     gSounds.pickup.src = "sounds/pickup.wav";
     gSounds.reveal.src = "sounds/powerup-reveal.wav";
     gSounds.empty.src = "sounds/empty-block.wav";
+    gSounds.win.src = "sounds/win.mp3";
+    gSounds.vine.src = "sounds/vine.mp3";
+    gSounds.galaxy.src = "sounds/galaxy.mp3";
+    gSounds.pipe.src = "sounds/pipe.mp3";
+    gSounds.what.src = "sounds/what.mp3";
+    gSounds.drip.src = "sounds/drip.mp3";
+    gSounds.hub.src = "sounds/hub.mp3";
 
     // Declare all images as image objects in a global textures object
     let gTextures = {
@@ -105,6 +130,7 @@
         jump_blocks: new Image(96, 80),
         creatures: new Image(256, 112),
         water: new Image(128, 32),
+        flags: new Image(144, 64),
     };
     
     // Initialize all images from files
@@ -115,6 +141,7 @@
     gTextures.jump_blocks.src = "graphics/jump_blocks.png";
     gTextures.creatures.src = "graphics/creatures.png";
     gTextures.water.src = "graphics/water.png";
+    gTextures.flags.src = "graphics/flags.png";
 
     // Declare and initialize quads for all textures as objects using the util.js functions
     gFrames = {
@@ -125,11 +152,16 @@
         jump_blocks: GenerateQuads(gTextures.jump_blocks, 16, 16, 16, 16),
         creatures: GenerateQuads(gTextures.creatures, 16, 16, 16, 16),
         water: GenerateQuads(gTextures.water, 16, 32, 16, 32),
+        posts: GenerateQuads(gTextures.flags, 16, 48, 16, 48).slice(0,6),
+        flags: GenerateFlags(gTextures.flags, 16, 16, 16, 16),
     }
     let tileSet = randInt(0, gFrames.tiles.length-1);
     let topperSet = randInt(0, gFrames.toppers.length-1);
     let background = randInt(0, 2);
     let pauseTimer = 0;
+
+    // Declare and initialize levels
+    gLevels = [level0, level1, level2, level3];
 
     // Add event listeners for keydown and keyup and change the array "keys" accordingly
     let keys = [];
@@ -148,6 +180,13 @@
             hitboxes = !hitboxes;
         if(e.keyCode == 65)
             slo = !slo;
+        if(e.keyCode == 49){
+            cameraScroll = (84*16*SCALE_FACTOR_WIDTH);
+            ctx.translate(-cameraScroll, 0);
+
+            gStateMachine.current.player.x = 94*16;
+            gStateMachine.current.player.y = 0;
+        }
     })
     window.addEventListener('keyup', function (e) {
         keys[e.keyCode] = false;
@@ -158,6 +197,8 @@
         start: new StartState(),
         play: new PlayState(),
         game_over: new GameOverState(),
+        win: new WinState(),
+        select: new SelectState(),
         });
 	gStateMachine.change('start');
 
@@ -226,8 +267,17 @@
         return Math.floor(Math.random() * (max - min + 1) + min); 
     }
 
-
-
+    function displayScore(x, y, score, frames){
+        if(frames == 0)
+            return;
+        ctx.textAlign = 'left';
+        ctx.font = gFonts.medium;
+        ctx.fillStyle = 'white';
+        ctx.fillText(score, x*SCALE_FACTOR_WIDTH, y*SCALE_FACTOR_HEIGHT);
+        requestAnimationFrame(function(){
+            displayScore(x, y-.5, score, frames-1);
+        });
+    }
     
 </script>
 

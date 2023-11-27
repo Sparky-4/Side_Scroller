@@ -15,6 +15,7 @@ class Entity {
     }
 
     hitPlayer(){}
+    hitShell(){}
     update(){}
     render(){}
 }
