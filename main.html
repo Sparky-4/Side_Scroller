@@ -248,6 +248,11 @@
         for(let i = 0; i < 10; i++)
             gFrames.backgrounds[background].draw(Math.floor(cameraScroll*2/3) + i*256*SCALE_FACTOR_WIDTH, 0);
         gLevelMaker.drawLevel();
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.font = gFonts.small;
+        ctx.fillStyle = 'white';
+        ctx.fillText("V" + VERSION, WINDOW_WIDTH + cameraScroll, WINDOW_HEIGHT);
         displayFPS();
         gStateMachine.render();
     }
