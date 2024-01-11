@@ -59,6 +59,9 @@
     const times = [];
     let fps;
     let slo = false;
+    let msPrev = window.performance.now();
+    const vFPS = 60;
+    const msPerFrame = 1000 / vFPS;
 
 	// Initialize a global level maker
     let gLevelMaker = new LevelMaker();
@@ -214,6 +217,15 @@
     * individual parts of the game
     */
     function update(){
+        if(!slo)
+            requestAnimationFrame(update);
+        const msNow = window.performance.now();
+        const msPassed = msNow - msPrev;
+
+        if (msPassed < msPerFrame) return;
+
+        const excessTime = msPassed % msPerFrame;
+        msPrev = msNow - excessTime;
         if(keys[80] && pauseTimer < 0){
             if(!gSounds.main.paused)
                 gSounds.main.pause();
@@ -223,11 +235,8 @@
         }
         pauseTimer--;
         gStateMachine.update();
-        if(!slo){
-            setTimeout(() => {
-                requestAnimationFrame(update);
-            }, ((fps-60)/60) * (1000/fps));
-        }
+        if(!slo)
+            requestAnimationFrame(draw);
     }
 
     /*
@@ -240,8 +249,6 @@
         gLevelMaker.drawLevel();
         displayFPS();
         gStateMachine.render();
-        if(!slo)
-            requestAnimationFrame(draw);
     }
 
     /*
