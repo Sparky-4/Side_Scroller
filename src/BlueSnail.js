@@ -83,7 +83,13 @@ class BlueSnail extends Entity{
         }
         else if(this.state == 0){
             this.dx = CAMERA_SPEED/SCALE_FACTOR_WIDTH*1.5;
-            this.dir = shell.x+shell.width/2 < this.x + this.width/2? -1:1;
+            if(shell == player)
+                this.dir = shell.x+shell.width/2 > this.x + this.width/2? -1:1;
+            else{
+                shell.dir *= -1;
+                this.dir = -shell.dir;
+                shell.x = this.x + shell.width*(shell.x+shell.width/2 < this.x + this.width/2? -1:1);
+            }
         }
         else{
             this.dy = -this.dx;
