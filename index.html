@@ -1,1 +1,302 @@
-<body onload="location.href = 'main.html'"></body>
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<link href='https://fonts.googleapis.com/css?family=Electrolize' rel='stylesheet'>
+	<style>
+		body {
+			overflow: hidden;
+			margin: 0px;
+		}
+		
+	</style>
+
+</head>
+<body onLoad = requestAnimationFrame(start)>
+
+<canvas id="myCanvas"></canvas>
+
+<!--js scripts for objects and misc.-->
+<script src="src/Quad.js"></script>
+<script src="src/Util.js"></script>
+<script src="src/constants.js"></script>
+<script src="src/Animation.js"></script>
+<script src="src/Timer.js"></script>
+<script src="src/character.js"></script>
+<script src="src/StateMachine.js"></script>
+<script src="src/levelMaker.js"></script>
+<script src="src/Entity.js"></script>
+<script src="src/Snail.js"></script>
+<script src="src/BlueSnail.js"></script>
+<script src="src/Fly.js"></script>
+<script src="src/Flag.js"></script>
+
+<!--js scripts for all states-->
+<script src="src/states/GameOverState.js"></script>
+<script src="src/states/StartState.js"></script>
+<script src="src/states/PlayState.js"></script>
+<script src="src/states/WinState.js"></script>
+<script src="src/states/SelectState.js"></script>
+
+<!--js scripts for all levels-->
+<script src="src/levels/level0.js"></script>
+<script src="src/levels/level1.js"></script>
+<script src="src/levels/level2.js"></script>
+<script src="src/levels/level3.js"></script>
+<script src="src/levels/level4.js"></script>
+<script src="src/levels/level5.js"></script>
+<script src="src/levels/level6.js"></script>
+
+<script>
+
+    // Declare and initialize the canvas variables
+    let cameraScroll = 0;
+    let canvas = document.getElementById("myCanvas");
+    let ctx = canvas.getContext("2d");
+    ctx.save();
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Variables for finding FPS
+    const times = [];
+    let fps;
+    let slo = false;
+    let msPrev = window.performance.now();
+    const vFPS = 60;
+    const msPerFrame = 1000 / vFPS;
+
+	// Initialize a global level maker
+    let gLevelMaker = new LevelMaker();
+
+    // Declare entities array 
+    let entities = []
+    let hitboxes = false;
+
+    // Load new font from the font files
+    let font = new FontFace('font', 'url(fonts/fipps.otf)');
+    font.load().then(function(loaded_face) {
+        document.fonts.add(loaded_face);
+    })
+    
+    // Declare and initialize objects that holds fonts
+    let gFonts = {
+        small: 4*SCALE_FACTOR_WIDTH + "px font",
+        medium: 8*SCALE_FACTOR_WIDTH + "px font",
+        large: 16*SCALE_FACTOR_WIDTH + "px font",
+        other: 2*SCALE_FACTOR_WIDTH + "px Arial"
+    };
+
+    // Declare all sounds as audio objects in a global sounds object
+    let gSounds = {
+        main: document.createElement("AUDIO"),
+        death: document.createElement("AUDIO"),
+        death2: document.createElement("AUDIO"),
+        x: document.createElement("AUDIO"),
+        jump: document.createElement("AUDIO"),
+        kill: document.createElement("AUDIO"),
+        kill2: document.createElement("AUDIO"),
+        pickup: document.createElement("AUDIO"),
+        reveal: document.createElement("AUDIO"),
+        empty: document.createElement("AUDIO"),
+        win: document.createElement("AUDIO"),
+        vine: document.createElement("AUDIO"),
+        galaxy: document.createElement("AUDIO"),
+        pipe: document.createElement("AUDIO"),
+        what: document.createElement("AUDIO"),
+        drip: document.createElement("AUDIO"),
+        hub: document.createElement("AUDIO"),
+    };
+	
+    // Initialize all sounds from files
+    gSounds.main.src = "sounds/music1.mp3";
+    gSounds.main.loop = true;
+    gSounds.death.src = "sounds/death.wav";
+    gSounds.death2.src = "sounds/death2.mp3";
+    gSounds.x.src = "sounds/x.mp3";
+    gSounds.jump.src = "sounds/jump.wav";
+    gSounds.kill.src = "sounds/kill.wav";
+    gSounds.kill2.src = "sounds/kill2.wav";
+    gSounds.pickup.src = "sounds/pickup.wav";
+    gSounds.reveal.src = "sounds/powerup-reveal.wav";
+    gSounds.empty.src = "sounds/empty-block.wav";
+    gSounds.win.src = "sounds/win.mp3";
+    gSounds.vine.src = "sounds/vine.mp3";
+    gSounds.galaxy.src = "sounds/galaxy.mp3";
+    gSounds.pipe.src = "sounds/pipe.mp3";
+    gSounds.what.src = "sounds/what.mp3";
+    gSounds.drip.src = "sounds/drip.mp3";
+    gSounds.hub.src = "sounds/hub.mp3";
+
+    // Declare all images as image objects in a global textures object
+    let gTextures = {
+        main: new Image(480, 640),
+        toppers: new Image(480, 1152),
+        character: new Image(352, 20),
+        backgrounds: new Image(256, 384),
+        jump_blocks: new Image(96, 80),
+        creatures: new Image(256, 112),
+        water: new Image(128, 32),
+        flags: new Image(144, 64),
+    };
+    
+    // Initialize all images from files
+    gTextures.main.src = "graphics/tiles.png";
+    gTextures.toppers.src = "graphics/tile_tops.png";
+    gTextures.character.src = "graphics/character.png";
+    gTextures.backgrounds.src = "graphics/backgrounds.png";
+    gTextures.jump_blocks.src = "graphics/jump_blocks.png";
+    gTextures.creatures.src = "graphics/creatures.png";
+    gTextures.water.src = "graphics/water.png";
+    gTextures.flags.src = "graphics/flags.png";
+
+    // Declare and initialize quads for all textures as objects using the util.js functions
+    gFrames = {
+        tiles: GenerateTiles(gTextures.main),
+        toppers: GenerateToppers(gTextures.toppers),
+        character: GenerateQuads(gTextures.character, 16, 20, 16, 20),
+        backgrounds: GenerateQuads(gTextures.backgrounds, 256, 128, 256, 128),
+        jump_blocks: GenerateQuads(gTextures.jump_blocks, 16, 16, 16, 16),
+        creatures: GenerateQuads(gTextures.creatures, 16, 16, 16, 16),
+        water: GenerateQuads(gTextures.water, 16, 32, 16, 32),
+        posts: GenerateQuads(gTextures.flags, 16, 48, 16, 48).slice(0,6),
+        flags: GenerateFlags(gTextures.flags, 16, 16, 16, 16),
+    }
+    let tileSet = randInt(0, gFrames.tiles.length-1);
+    let topperSet = randInt(0, gFrames.toppers.length-1);
+    let background = randInt(0, 2);
+    let pauseTimer = 0;
+
+    // Declare and initialize levels
+    gLevels = [level0, level1, level2, level3, level4, level5, level6];
+
+    // Add event listeners for keydown and keyup and change the array "keys" accordingly
+    let keys = [];
+    window.addEventListener('keydown', function (e) {
+        keys[e.keyCode] = true;
+        if(e.keyCode == 82){
+            tileSet = randInt(0, gFrames.tiles.length-1);
+            topperSet = randInt(0, gFrames.toppers.length-1);
+            background = randInt(0, 2);
+        }
+        if(e.keyCode == 81){
+            requestAnimationFrame(update);
+            requestAnimationFrame(draw)
+        }
+        if(e.keyCode == 72)
+            hitboxes = !hitboxes;
+        if(e.keyCode == 65)
+            slo = !slo;
+        if(e.keyCode == 49){
+            cameraScroll = (84*16*SCALE_FACTOR_WIDTH);
+            ctx.translate(-cameraScroll, 0);
+
+            gStateMachine.current.player.x = 94*16;
+            gStateMachine.current.player.y = 0;
+        }
+    })
+    window.addEventListener('keyup', function (e) {
+        keys[e.keyCode] = false;
+    })
+
+    // Create state machine and initialize states
+    gStateMachine = new StateMachine({
+        start: new StartState(),
+        play: new PlayState(),
+        game_over: new GameOverState(),
+        win: new WinState(),
+        select: new SelectState(),
+        });
+	gStateMachine.change('start');
+
+    function start(){
+        gLevelMaker.generateLevel();
+        update();
+        draw();
+    }
+
+    /* 
+    * The update function - called every frame using requestAnimationFrame and updates
+    * individual parts of the game
+    */
+    function update(){
+        if(!slo)
+            requestAnimationFrame(update);
+        const msNow = window.performance.now();
+        const msPassed = msNow - msPrev;
+
+        if (msPassed < msPerFrame) return;
+
+        const excessTime = msPassed % msPerFrame;
+        msPrev = msNow - excessTime;
+        if(keys[80] && pauseTimer < 0){
+            if(!gSounds.main.paused)
+                gSounds.main.pause();
+            else
+                gSounds.main.play();
+            pauseTimer = 10;
+        }
+        pauseTimer--;
+        gStateMachine.update();
+        if(!slo)
+            requestAnimationFrame(draw);
+    }
+
+    /*
+    * Draw on the canvas and call the render functions of other necessary parts
+    */
+    function draw(){ 
+        ctx.imageSmoothingEnabled = false; 
+        for(let i = 0; i < 10; i++)
+            gFrames.backgrounds[background].draw(Math.floor(cameraScroll*2/3) + i*256*SCALE_FACTOR_WIDTH, 0);
+        gLevelMaker.drawLevel();
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.font = gFonts.small;
+        ctx.fillStyle = 'white';
+        ctx.fillText("V" + VERSION, WINDOW_WIDTH + cameraScroll, WINDOW_HEIGHT);
+        displayFPS();
+        gStateMachine.render();
+    }
+
+    /*
+    * Display the FPS by adding a time stamp to the times array and removing any stamp
+    * longer than one second
+    */
+    function displayFPS(){
+        const now = performance.now();
+        while (times.length > 0 && times[0] <= now - 1000) {
+            times.shift();
+        }
+        times.push(now);
+        fps = times.length;
+        
+        ctx.textAlign = 'left';
+        ctx.font = gFonts.small;
+        ctx.fillStyle = 'blue';
+        ctx.fillText("FPS: " + fps, 10*SCALE_FACTOR_WIDTH + cameraScroll, 10*SCALE_FACTOR_HEIGHT);
+    }
+
+    function randInt(min, max){
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1) + min); 
+    }
+
+    function displayScore(x, y, score, frames){
+        if(frames == 0)
+            return;
+        ctx.textAlign = 'left';
+        ctx.font = gFonts.medium;
+        ctx.fillStyle = 'white';
+        ctx.fillText(score, x*SCALE_FACTOR_WIDTH, y*SCALE_FACTOR_HEIGHT);
+        requestAnimationFrame(function(){
+            displayScore(x, y-.5, score, frames-1);
+        });
+    }
+    
+</script>
+
+
+    
+</body>
+</html>
